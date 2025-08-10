@@ -1,11 +1,11 @@
 #if os(macOS)
 import Foundation
 import SwiftyBitTorrent
+import Dispatch
 
 @available(macOS 13.0, *)
-@main
 struct CLT {
-    static func main() async throws {
+    static func run() async throws {
         var args = CommandLine.arguments
         let exePath = args.removeFirst()
         var downloadDir: URL?
@@ -84,6 +84,19 @@ struct CLT {
         }
         return String(format: "%.1f %@", value, units[unit])
     }
+}
+
+if #available(macOS 13.0, *) {
+    Task {
+        do { try await CLT.run() } catch {
+            fputs("\(error)\n", stderr)
+            exit(1)
+        }
+    }
+    dispatchMain()
+} else {
+    fputs("Requires macOS 13 or newer\n", stderr)
+    exit(1)
 }
 #else
 // Non-macOS platforms are not supported for this CLI target.
