@@ -1,0 +1,6 @@
+module CLibtorrentRB [system] {
+  header "shim.h"
+  export *
+}
+
+

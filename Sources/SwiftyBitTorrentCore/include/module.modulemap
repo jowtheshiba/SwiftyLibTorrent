@@ -1,0 +1,6 @@
+module SwiftyBitTorrentCore {
+  header "SwiftyBitTorrentCore.h"
+  export *
+}
+
+
