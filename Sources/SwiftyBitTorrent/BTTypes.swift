@@ -57,6 +57,45 @@ public struct BTTorrentStatus: Sendable {
     public let numSeeds: Int
     public let state: BTTorrentState
     public let hasMetadata: Bool
+    public let id: String
+    public let name: String
+}
+
+@available(iOS 13.0, macOS 13.0, *)
+public struct BTTorrentOverview: Sendable {
+    public let id: String
+    public let name: String
+}
+
+@available(iOS 13.0, macOS 13.0, *)
+public struct BTFileInfo: Sendable {
+    public let index: Int
+    public let size: Int64
+    public let offset: Int64
+    public let path: String
+    public let priority: Int
+}
+
+@available(iOS 13.0, macOS 13.0, *)
+public enum BTAlertType: Int, Sendable {
+    case torrentFinished = 1
+    case torrentError = 2
+    case metadataReceived = 3
+    case trackerError = 4
+}
+
+@available(iOS 13.0, macOS 13.0, *)
+public struct BTAlert: Sendable {
+    public let type: BTAlertType
+    public let id: String
+    public let errorCode: Int
+    public let message: String
+}
+
+@available(iOS 13.0, macOS 13.0, *)
+public struct BTResumeDataItem: Sendable {
+    public let id: String
+    public let data: Data
 }
 
 

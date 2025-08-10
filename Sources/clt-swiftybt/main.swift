@@ -81,15 +81,11 @@ struct CLT {
     }
 }
 
-@main
-struct CLTMain {
-    static func main() {
-        Task {
-            do { try await CLT.run() } catch {
-                fputs("\(error)\n", stderr)
-                exit(1)
-            }
-        }
-        dispatchMain()
+
+Task {
+    do { try await CLT.run() } catch {
+        fputs("\(error)\n", stderr)
+        exit(1)
     }
 }
+dispatchMain()
