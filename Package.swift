@@ -11,20 +11,10 @@ let package = Package(
         .executable(name: "clt-swiftybt", targets: ["clt-swiftybt"])
     ],
     targets: [
-        // System library to obtain include and link flags from pkg-config libtorrent-rasterbar
-        .systemLibrary(
-            name: "CLibtorrentRB",
-            pkgConfig: "libtorrent-rasterbar",
-            providers: [
-                .brew(["libtorrent-rasterbar"])
-            ]
-        ),
         // C++ bridge exposing a C API for Swift to call
         .target(
             name: "SwiftyBitTorrentCore",
-            dependencies: [
-                .target(name: "CLibtorrentRB")
-            ],
+            dependencies: [],
             publicHeadersPath: "include",
             cxxSettings: [
                 .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS, .linux])),
