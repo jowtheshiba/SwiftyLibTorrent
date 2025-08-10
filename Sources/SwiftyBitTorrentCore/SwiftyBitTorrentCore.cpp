@@ -3,7 +3,10 @@
 #include <string>
 #include <memory>
 #include <cstdio>
+#include <vector>
+#ifdef __APPLE__
 #include <TargetConditionals.h>
+#endif
 
 #if defined(__APPLE__) && TARGET_OS_OSX
 // libtorrent (macOS only)

@@ -10,7 +10,6 @@ struct CLT {
         let exePath = args.removeFirst()
         var downloadDir: URL?
 
-        // Parse optional --dir <path>
         var rest: [String] = []
         var i = 0
         while i < args.count {
@@ -24,7 +23,6 @@ struct CLT {
             i += 1
         }
 
-        // Default download directory next to the executable
         if downloadDir == nil {
             let exeURL = URL(fileURLWithPath: exePath).resolvingSymlinksInPath()
             downloadDir = exeURL.deletingLastPathComponent().appendingPathComponent("torrent_downloads", isDirectory: true)
@@ -35,7 +33,6 @@ struct CLT {
             exit(2)
         }
 
-        // Ensure directory exists
         try FileManager.default.createDirectory(at: downloadDir, withIntermediateDirectories: true)
 
         guard !rest.isEmpty else {
@@ -58,7 +55,7 @@ struct CLT {
         }
 
         for await batch in session.statusUpdatesStream(intervalMs: 1000) {
-            print("\u{001B}[2J\u{001B}[H") // clear screen
+            print("\u{001B}[2J\u{001B}[H")
             print("Saving to: \(downloadDir.path)\n")
             for (idx, st) in batch.enumerated() {
                 let pct = Int((st.progress * 100).rounded())
@@ -86,18 +83,30 @@ struct CLT {
     }
 }
 
-if #available(macOS 13.0, *) {
-    Task {
-        do { try await CLT.run() } catch {
-            fputs("\(error)\n", stderr)
+@main
+struct CLTMain {
+    static func main() {
+        if #available(macOS 13.0, *) {
+            Task {
+                do { try await CLT.run() } catch {
+                    fputs("\(error)\n", stderr)
+                    exit(1)
+                }
+            }
+            dispatchMain()
+        } else {
+            fputs("Requires macOS 13 or newer\n", stderr)
             exit(1)
         }
     }
-    dispatchMain()
-} else {
-    fputs("Requires macOS 13 or newer\n", stderr)
-    exit(1)
 }
 #else
-// Non-macOS platforms are not supported for this CLI target.
+import Foundation
+
+@main
+struct CLTUnsupported {
+    static func main() {
+        fputs("clt-swiftybt: unsupported platform (only macOS is supported)\n", stderr)
+    }
+}
 #endif
