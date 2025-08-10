@@ -12,6 +12,8 @@
 #include <libtorrent/torrent_info.hpp>
 #include <libtorrent/torrent_handle.hpp>
 #include <libtorrent/torrent_status.hpp>
+#include <libtorrent/alert_types.hpp>
+#include <libtorrent/alert.hpp>
 
 namespace lt = libtorrent;
 
@@ -149,6 +151,41 @@ swbt_error_code_e swbt_torrent_status(swbt_torrent_handle_t* handle,
     out_status->state = static_cast<int32_t>(st.state);
     out_status->has_metadata = st.has_metadata ? 1 : 0;
     return SWBT_OK;
+}
+
+void swbt_session_post_torrent_updates(swbt_session_t* session) {
+    if (!session) return;
+    static_cast<SwbtSessionImpl*>(session->impl)->session->post_torrent_updates();
+}
+
+int swbt_session_poll_updates(swbt_session_t* session,
+                              int timeout_ms,
+                              swbt_torrent_status_t* out_statuses,
+                              int max_count) {
+    if (!session || !out_statuses || max_count <= 0) return 0;
+    lt::session* s = static_cast<SwbtSessionImpl*>(session->impl)->session.get();
+    s->wait_for_alert(lt::milliseconds(timeout_ms));
+    std::vector<lt::alert*> alerts;
+    s->pop_alerts(&alerts);
+    int written = 0;
+    for (lt::alert* a : alerts) {
+        if (auto* upd = lt::alert_cast<lt::state_update_alert>(a)) {
+            for (const auto& st : upd->status) {
+                if (written >= max_count) return written;
+                swbt_torrent_status_t& o = out_statuses[written++];
+                o.progress = st.progress;
+                o.download_rate = st.download_rate;
+                o.upload_rate = st.upload_rate;
+                o.total_downloaded = st.total_download;
+                o.total_uploaded = st.total_upload;
+                o.num_peers = st.num_peers;
+                o.num_seeds = st.num_seeds;
+                o.state = static_cast<int32_t>(st.state);
+                o.has_metadata = st.has_metadata ? 1 : 0;
+            }
+        }
+    }
+    return written;
 }
 
 

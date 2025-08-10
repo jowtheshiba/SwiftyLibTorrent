@@ -5,16 +5,46 @@ import SwiftyBitTorrent
 struct CLT {
     static func main() async throws {
         var args = CommandLine.arguments
-        _ = args.removeFirst() // executable name
-        guard !args.isEmpty else {
-            fputs("Usage: clt-swiftybt <magnet-or-torrent> [more...]\n", stderr)
+        let exePath = args.removeFirst()
+        var downloadDir: URL?
+
+        // Parse optional --dir <path>
+        var rest: [String] = []
+        var i = 0
+        while i < args.count {
+            let a = args[i]
+            if a == "--dir", i + 1 < args.count {
+                downloadDir = URL(fileURLWithPath: args[i + 1], isDirectory: true)
+                i += 2
+                continue
+            }
+            rest.append(a)
+            i += 1
+        }
+
+        // Default download directory next to the executable
+        if downloadDir == nil {
+            let exeURL = URL(fileURLWithPath: exePath).resolvingSymlinksInPath()
+            downloadDir = exeURL.deletingLastPathComponent().appendingPathComponent("torrent_downloads", isDirectory: true)
+        }
+
+        guard let downloadDir else {
+            fputs("Failed to determine download directory\n", stderr)
             exit(2)
         }
 
-        let session = BTSession(config: .init())
+        // Ensure directory exists
+        try FileManager.default.createDirectory(at: downloadDir, withIntermediateDirectories: true)
+
+        guard !rest.isEmpty else {
+            fputs("Usage: clt-swiftybt [--dir <path>] <magnet-or-torrent> [more...]\n", stderr)
+            exit(2)
+        }
+
+        let session = BTSession(config: .init(savePath: downloadDir))
         var torrents: [BTTorrent] = []
 
-        for a in args {
+        for a in rest {
             if a.hasPrefix("magnet:") {
                 let t = try await session.addTorrent(magnet: a)
                 torrents.append(t)
@@ -25,10 +55,10 @@ struct CLT {
             }
         }
 
-        while true {
+        for await batch in session.statusUpdatesStream(intervalMs: 1000) {
             print("\u{001B}[2J\u{001B}[H") // clear screen
-            for (idx, t) in torrents.enumerated() {
-                let st = await t.currentStatus()
+            print("Saving to: \(downloadDir.path)\n")
+            for (idx, st) in batch.enumerated() {
                 let pct = Int((st.progress * 100).rounded())
                 print("[")
                 print(String(format: "%2d", idx+1), terminator: "] ")
@@ -36,9 +66,9 @@ struct CLT {
                       "down:", humanize(bytesPerSec: st.downloadRate),
                       "up:", humanize(bytesPerSec: st.uploadRate),
                       "peers:", st.numPeers,
-                      "seeds:", st.numSeeds)
+                      "seeds:", st.numSeeds,
+                      st.state.rawValue)
             }
-            try? await Task.sleep(nanoseconds: 1_000_000_000)
         }
     }
 
@@ -53,5 +83,3 @@ struct CLT {
         return String(format: "%.1f %@", value, units[unit])
     }
 }
-
-

@@ -69,6 +69,15 @@ void swbt_torrent_force_reannounce(swbt_torrent_handle_t* handle);
 swbt_error_code_e swbt_torrent_status(swbt_torrent_handle_t* handle,
                                       swbt_torrent_status_t* out_status);
 
+// Alerts-based updates (session-wide)
+void swbt_session_post_torrent_updates(swbt_session_t* session);
+// Wait up to timeout_ms and collect torrent_status from state_update_alerts.
+// Returns number of entries written to out_statuses (<= max_count).
+int swbt_session_poll_updates(swbt_session_t* session,
+                              int timeout_ms,
+                              swbt_torrent_status_t* out_statuses,
+                              int max_count);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

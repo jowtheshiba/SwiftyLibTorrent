@@ -3,6 +3,7 @@ import SwiftyBitTorrentCore
 
 public final class BTSession {
     private var raw: UnsafeMutablePointer<swbt_session_t>?
+    private let eventQueue = DispatchQueue(label: "swiftybt.session.events")
 
     public init(config: BTSessionConfig = .init()) {
         var savePathCString: [CChar]? = config.savePath?.path.cString(using: .utf8)
@@ -56,6 +57,53 @@ public final class BTSession {
         guard let raw else { return }
         swbt_remove_torrent(raw, torrent.handle, withData ? 1 : 0)
     }
+
+    public func statusUpdatesStream(intervalMs: Int = 1000, batch: Int = 256) -> AsyncStream<[BTTorrentStatus]> {
+        AsyncStream { continuation in
+            let task = Task {
+                var buffer = Array(repeating: swbt_torrent_status_t(
+                    progress: 0, download_rate: 0, upload_rate: 0,
+                    total_downloaded: 0, total_uploaded: 0,
+                    num_peers: 0, num_seeds: 0, state: 0, has_metadata: 0
+                ), count: batch)
+                while !Task.isCancelled {
+                    if let raw {
+                        swbt_session_post_torrent_updates(raw)
+                        let n = buffer.withUnsafeMutableBufferPointer { buf in
+                            swbt_session_poll_updates(raw, Int32(intervalMs), buf.baseAddress, Int32(batch))
+                        }
+                        if n > 0 {
+                            let mapped: [BTTorrentStatus] = (0..<Int(n)).map { i in
+                                let s = buffer[i]
+                                let st: BTTorrentState
+                                switch s.state {
+                                case 0, 6: st = .checking
+                                case 1, 2: st = .downloading
+                                case 3:    st = .downloading
+                                case 4:    st = .seeding
+                                default:   st = .unknown
+                                }
+                                return BTTorrentStatus(
+                                    progress: s.progress,
+                                    downloadRate: s.download_rate,
+                                    uploadRate: s.upload_rate,
+                                    totalDownloaded: s.total_downloaded,
+                                    totalUploaded: s.total_uploaded,
+                                    numPeers: Int(s.num_peers),
+                                    numSeeds: Int(s.num_seeds),
+                                    state: st,
+                                    hasMetadata: s.has_metadata != 0
+                                )
+                            }
+                            continuation.yield(mapped)
+                        }
+                    }
+                }
+                continuation.finish()
+            }
+            continuation.onTermination = { _ in task.cancel() }
+        }
+    }
 }
 
 public final class BTTorrent {
@@ -80,6 +128,14 @@ public final class BTTorrent {
             num_peers: 0, num_seeds: 0, state: 0, has_metadata: 0
         )
         _ = swbt_torrent_status(handle, &cstatus)
+        let mappedState: BTTorrentState
+        switch cstatus.state {
+        case 0, 6: mappedState = .checking           // checking_files / checking_resume_data
+        case 1, 2: mappedState = .downloading        // downloading_metadata / downloading
+        case 3:     mappedState = .downloading        // finished (not yet seeding)
+        case 4:     mappedState = .seeding
+        default:    mappedState = .unknown
+        }
         return BTTorrentStatus(
             progress: cstatus.progress,
             downloadRate: cstatus.download_rate,
@@ -88,7 +144,7 @@ public final class BTTorrent {
             totalUploaded: cstatus.total_uploaded,
             numPeers: Int(cstatus.num_peers),
             numSeeds: Int(cstatus.num_seeds),
-            state: .unknown,
+            state: mappedState,
             hasMetadata: cstatus.has_metadata != 0
         )
     }
