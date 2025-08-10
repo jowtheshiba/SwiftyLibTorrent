@@ -22,14 +22,17 @@ let package = Package(
         // C++ bridge exposing a C API for Swift to call
         .target(
             name: "SwiftyBitTorrentCore",
-            dependencies: ["CLibtorrentRB"],
+            dependencies: [
+                .target(name: "CLibtorrentRB", condition: .when(platforms: [.macOS]))
+            ],
             publicHeadersPath: "include",
             cxxSettings: [
-                .unsafeFlags(["-std=c++17", "-I/opt/homebrew/include", "-I/usr/local/include"]) // libtorrent headers
+                .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS])),
+                .unsafeFlags(["-I/opt/homebrew/include", "-I/usr/local/include"], .when(platforms: [.macOS]))
             ],
             linkerSettings: [
-                .unsafeFlags(["-L/opt/homebrew/lib", "-L/usr/local/lib"]),
-                .linkedLibrary("torrent-rasterbar")
+                .unsafeFlags(["-L/opt/homebrew/lib", "-L/usr/local/lib"], .when(platforms: [.macOS])),
+                .linkedLibrary("torrent-rasterbar", .when(platforms: [.macOS]))
             ]
         ),
         // Swift wrapper API
@@ -40,7 +43,10 @@ let package = Package(
         // CLI tool
         .executableTarget(
             name: "clt-swiftybt",
-            dependencies: ["SwiftyBitTorrent"]
+            dependencies: ["SwiftyBitTorrent"],
+            swiftSettings: [
+                .define("SWIFTYBT_CLI", .when(platforms: [.macOS]))
+            ]
         )
     ]
 )

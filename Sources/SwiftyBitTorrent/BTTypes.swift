@@ -1,5 +1,6 @@
 import Foundation
 
+@available(iOS 13.0, macOS 13.0, *)
 public struct BTSessionConfig {
     public var savePath: URL?
     public var listenPort: Int
@@ -34,6 +35,7 @@ public struct BTSessionConfig {
     }
 }
 
+@available(iOS 13.0, macOS 13.0, *)
 public enum BTTorrentState: String, Sendable {
     case unknown
     case checking
@@ -44,6 +46,7 @@ public enum BTTorrentState: String, Sendable {
     case error
 }
 
+@available(iOS 13.0, macOS 13.0, *)
 public struct BTTorrentStatus: Sendable {
     public let progress: Double
     public let downloadRate: Int64

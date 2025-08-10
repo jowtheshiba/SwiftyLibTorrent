@@ -1,6 +1,8 @@
+#if os(macOS)
 import Foundation
 import SwiftyBitTorrent
 
+@available(macOS 13.0, *)
 @main
 struct CLT {
     static func main() async throws {
@@ -83,3 +85,6 @@ struct CLT {
         return String(format: "%.1f %@", value, units[unit])
     }
 }
+#else
+// Non-macOS platforms are not supported for this CLI target.
+#endif

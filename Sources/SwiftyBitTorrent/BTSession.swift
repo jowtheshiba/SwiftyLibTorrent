@@ -1,6 +1,7 @@
 import Foundation
 import SwiftyBitTorrentCore
 
+@available(iOS 13.0, macOS 13.0, *)
 public final class BTSession {
     private var raw: UnsafeMutablePointer<swbt_session_t>?
     private let eventQueue = DispatchQueue(label: "swiftybt.session.events")
@@ -29,6 +30,7 @@ public final class BTSession {
         if let raw { swbt_session_free(raw) }
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func addTorrent(magnet: String, savePath: URL? = nil) async throws -> BTTorrent {
         guard let raw else { throw NSError(domain: "SwiftyBT", code: -1) }
         var handlePtr: UnsafeMutablePointer<swbt_torrent_handle_t>? = nil
@@ -41,6 +43,7 @@ public final class BTSession {
         return BTTorrent(handle: hp)
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func addTorrent(fileURL: URL, savePath: URL? = nil) async throws -> BTTorrent {
         guard let raw else { throw NSError(domain: "SwiftyBT", code: -1) }
         var handlePtr: UnsafeMutablePointer<swbt_torrent_handle_t>? = nil
@@ -53,11 +56,13 @@ public final class BTSession {
         return BTTorrent(handle: hp)
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func removeTorrent(_ torrent: BTTorrent, withData: Bool = false) async {
         guard let raw else { return }
         swbt_remove_torrent(raw, torrent.handle, withData ? 1 : 0)
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func statusUpdatesStream(intervalMs: Int = 1000, batch: Int = 256) -> AsyncStream<[BTTorrentStatus]> {
         AsyncStream { continuation in
             let task = Task {
@@ -106,6 +111,7 @@ public final class BTSession {
     }
 }
 
+@available(iOS 13.0, macOS 13.0, *)
 public final class BTTorrent {
     fileprivate let handle: UnsafeMutablePointer<swbt_torrent_handle_t>
 
@@ -149,10 +155,12 @@ public final class BTTorrent {
         )
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func currentStatus() async -> BTTorrentStatus {
         status()
     }
 
+    @available(iOS 13.0, macOS 13.0, *)
     public func statusStream(intervalSeconds: Double = 1.0) -> AsyncStream<BTTorrentStatus> {
         AsyncStream { continuation in
             let task = Task {

@@ -3,8 +3,10 @@
 #include <string>
 #include <memory>
 #include <cstdio>
+#include <TargetConditionals.h>
 
-// libtorrent
+#if defined(__APPLE__) && TARGET_OS_OSX
+// libtorrent (macOS only)
 #include <libtorrent/session.hpp>
 #include <libtorrent/settings_pack.hpp>
 #include <libtorrent/add_torrent_params.hpp>
@@ -187,5 +189,47 @@ int swbt_session_poll_updates(swbt_session_t* session,
     }
     return written;
 }
+
+#else // non-macOS (stubs)
+
+swbt_session_t* swbt_session_new(const swbt_session_config_t* /*config*/) {
+    return new swbt_session_t{};
+}
+
+void swbt_session_free(swbt_session_t* session) {
+    delete session;
+}
+
+swbt_error_code_e swbt_add_magnet(swbt_session_t* /*session*/, const char* /*magnet_uri*/, const char* /*save_path*/, swbt_torrent_handle_t** out_handle) {
+    if (out_handle) *out_handle = nullptr;
+    return SWBT_ERR_GENERIC;
+}
+
+swbt_error_code_e swbt_add_torrent_file(swbt_session_t* /*session*/, const char* /*torrent_file_path*/, const char* /*save_path*/, swbt_torrent_handle_t** out_handle) {
+    if (out_handle) *out_handle = nullptr;
+    return SWBT_ERR_GENERIC;
+}
+
+void swbt_remove_torrent(swbt_session_t* /*session*/, swbt_torrent_handle_t* handle, int /*with_data*/) {
+    delete handle;
+}
+
+void swbt_torrent_pause(swbt_torrent_handle_t* /*handle*/) {}
+void swbt_torrent_resume(swbt_torrent_handle_t* /*handle*/) {}
+void swbt_torrent_force_reannounce(swbt_torrent_handle_t* /*handle*/) {}
+
+swbt_error_code_e swbt_torrent_status(swbt_torrent_handle_t* /*handle*/, swbt_torrent_status_t* out_status) {
+    if (!out_status) return SWBT_ERR_INVALID_ARG;
+    *out_status = swbt_torrent_status_t{0};
+    return SWBT_OK;
+}
+
+void swbt_session_post_torrent_updates(swbt_session_t* /*session*/) {}
+
+int swbt_session_poll_updates(swbt_session_t* /*session*/, int /*timeout_ms*/, swbt_torrent_status_t* /*out_statuses*/, int /*max_count*/) {
+    return 0;
+}
+
+#endif // platform guard
 
 
