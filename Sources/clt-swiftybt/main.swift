@@ -1,9 +1,7 @@
-#if os(macOS)
 import Foundation
 import SwiftyBitTorrent
 import Dispatch
 
-@available(macOS 13.0, *)
 struct CLT {
     static func run() async throws {
         var args = CommandLine.arguments
@@ -86,27 +84,12 @@ struct CLT {
 @main
 struct CLTMain {
     static func main() {
-        if #available(macOS 13.0, *) {
-            Task {
-                do { try await CLT.run() } catch {
-                    fputs("\(error)\n", stderr)
-                    exit(1)
-                }
+        Task {
+            do { try await CLT.run() } catch {
+                fputs("\(error)\n", stderr)
+                exit(1)
             }
-            dispatchMain()
-        } else {
-            fputs("Requires macOS 13 or newer\n", stderr)
-            exit(1)
         }
+        dispatchMain()
     }
 }
-#else
-import Foundation
-
-@main
-struct CLTUnsupported {
-    static func main() {
-        fputs("clt-swiftybt: unsupported platform (only macOS is supported)\n", stderr)
-    }
-}
-#endif
