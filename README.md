@@ -15,6 +15,8 @@
 - **Swift 5.9+** (Xcode 15+) and **macOS 13+** for async/await in the public API
 - Libtorrent (Rasterbar) 2.0.x installed on the system
   - macOS (Homebrew): `brew install libtorrent-rasterbar`
+  - Linux (Ubuntu/Debian): `sudo apt install libtorrent-rasterbar-dev pkg-config`  
+    Depending on your repo, the package may be named `libtorrent-rasterbar2.0-dev`.
 
 Notes
 - The CLI target is macOS-only. Building it for iOS is not supported.
@@ -51,6 +53,31 @@ Then: `brew install libtorrent-rasterbar` (for macOS builds).
 brew install libtorrent-rasterbar
 swift build
 ```
+
+### Linux support
+
+The Swift library builds and links against libtorrent on Linux via pkg-config. The CLI target is macOS-only.
+
+Install dependencies (Ubuntu 22.04/24.04):
+```bash
+sudo apt update
+sudo apt install libtorrent-rasterbar-dev pkg-config
+# On some repos:
+# sudo apt install libtorrent-rasterbar2.0-dev pkg-config
+```
+
+Build:
+```bash
+swift build
+```
+
+Notes:
+- The package uses pkg-config key `libtorrent-rasterbar`. Verify it resolves:
+  ```bash
+  pkg-config --cflags --libs libtorrent-rasterbar
+  ```
+- If you built libtorrent from source into a non-system prefix (e.g. `/usr/local`), ensure your runtime linker finds it (update `/etc/ld.so.conf.d/*.conf` and run `sudo ldconfig`, or export `LD_LIBRARY_PATH`).
+- The library supports Linux/arm64 if your distribution provides `libtorrent-rasterbar` for that arch.
 
 ### CLI tool (macOS)
 After `swift build`, the binary is at:
@@ -110,10 +137,10 @@ for await batch in session.statusUpdatesStream(intervalMs: 1000) {
 
 ### Troubleshooting
 - **"Building for 'iOS', but linking in dylib built for 'macOS'"**
-  - The CLI is macOS-only. Select `My Mac` destination. Library links to `libtorrent-rasterbar` only on macOS.
+  - The CLI is macOS-only. Select `My Mac` destination. The Swift library links to `libtorrent-rasterbar` on macOS and Linux.
 - **`'libtorrent/session.hpp' file not found`**
-  - Install Homebrew package: `brew install libtorrent-rasterbar`
-  - Ensure Xcode uses the macOS toolchain and destination `My Mac` for the CLI.
+  - macOS: `brew install libtorrent-rasterbar`
+  - Linux: `sudo apt install libtorrent-rasterbar-dev` (or `libtorrent-rasterbar2.0-dev`), and ensure `pkg-config --libs libtorrent-rasterbar` works.
 - **`'main' attribute cannot be used in a module that contains top-level code'`**
   - Use the `clt-swiftybt` scheme with `My Mac` destination. Clean Build Folder. The project uses a top-level `dispatchMain()` entry for the CLI.
 
