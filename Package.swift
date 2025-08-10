@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "SwiftyBitTorrent",
     platforms: [
-        .macOS(.v13)
+        .macOS(.v13),
+        .iOS(.v13)
     ],
     products: [
         .library(name: "SwiftyBitTorrent", targets: ["SwiftyBitTorrent"]),
@@ -17,7 +18,7 @@ let package = Package(
             dependencies: [],
             publicHeadersPath: "include",
             cxxSettings: [
-                .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS, .linux])),
+                .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS, .linux, .iOS])),
                 .define("SWBT_USE_LIBTORRENT", .when(platforms: [.macOS, .linux])),
                 .unsafeFlags(["-I/opt/homebrew/include", "-I/usr/local/include"], .when(platforms: [.macOS]))
             ],
