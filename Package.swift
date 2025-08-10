@@ -16,23 +16,24 @@ let package = Package(
             name: "CLibtorrentRB",
             pkgConfig: "libtorrent-rasterbar",
             providers: [
-                .brew(["libtorrent-rasterbar"]) // Homebrew formula name
+                .brew(["libtorrent-rasterbar"])
             ]
         ),
         // C++ bridge exposing a C API for Swift to call
         .target(
             name: "SwiftyBitTorrentCore",
             dependencies: [
-                .target(name: "CLibtorrentRB", condition: .when(platforms: [.macOS]))
+                .target(name: "CLibtorrentRB")
             ],
             publicHeadersPath: "include",
             cxxSettings: [
-                .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS])),
+                .unsafeFlags(["-std=c++17"], .when(platforms: [.macOS, .linux])),
+                .define("SWBT_USE_LIBTORRENT", .when(platforms: [.macOS, .linux])),
                 .unsafeFlags(["-I/opt/homebrew/include", "-I/usr/local/include"], .when(platforms: [.macOS]))
             ],
             linkerSettings: [
                 .unsafeFlags(["-L/opt/homebrew/lib", "-L/usr/local/lib"], .when(platforms: [.macOS])),
-                .linkedLibrary("torrent-rasterbar", .when(platforms: [.macOS]))
+                .linkedLibrary("torrent-rasterbar", .when(platforms: [.macOS, .linux]))
             ]
         ),
         // Swift wrapper API

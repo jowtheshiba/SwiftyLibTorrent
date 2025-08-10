@@ -8,7 +8,7 @@
 #include <TargetConditionals.h>
 #endif
 
-#if defined(__APPLE__) && TARGET_OS_OSX
+#if defined(SWBT_USE_LIBTORRENT)
 // libtorrent (macOS only)
 #include <libtorrent/session.hpp>
 #include <libtorrent/settings_pack.hpp>
