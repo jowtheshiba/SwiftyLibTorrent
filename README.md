@@ -4,7 +4,7 @@
 
 ## SwiftyBitTorrent
 
-Thin Swift wrapper around arvidn/libtorrent (Rasterbar) with an optional macOS CLI tool.
+ Thin Swift wrapper around [arvidn/libtorrent](https://github.com/arvidn/libtorrent) (Rasterbar) with an optional macOS CLI tool.
 
 ### Features
 - **Swift library**: minimal API for starting a session, adding torrents by file or magnet, removing/pause/resume, querying torrent status
@@ -76,23 +76,6 @@ Xcode run notes:
 - Destination: My Mac (Apple Silicon)
 
 ### Swift API (high level)
-
-Types
-- `BTSessionConfig` (macOS/iOS 13+)
-  - `savePath: URL?`, `listenPort: Int`, discovery toggles (DHT/LSD/UPnP/NATPMP), rate limits, `postStatusIntervalMs`
-- `BTSession` (macOS/iOS 13+)
-  - `init(config:)`
-  - `addTorrent(magnet:) async throws -> BTTorrent`
-  - `addTorrent(fileURL:) async throws -> BTTorrent`
-  - `removeTorrent(_:withData:) async`
-  - `statusUpdatesStream(intervalMs:batch:) -> AsyncStream<[BTTorrentStatus]>`
-- `BTTorrent` (macOS/iOS 13+)
-  - `pause()`, `resume()`, `forceReannounce()`
-  - `status() -> BTTorrentStatus`
-  - `currentStatus() async -> BTTorrentStatus`
-  - `statusStream(intervalSeconds:) -> AsyncStream<BTTorrentStatus>`
-- `BTTorrentStatus`
-  - `progress: Double`, `downloadRate/uploadRate: Int64`, `totalDownloaded/totalUploaded: Int64`, `numPeers/numSeeds: Int`, `state: BTTorrentState`, `hasMetadata: Bool`
 
 Minimal usage
 ```swift
